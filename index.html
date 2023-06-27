@@ -36,5 +36,83 @@ Type your own Sage computation below and click “Evaluate”.
 def f(n=(0,10)):
     print(2^n)
 </script></div>
+
+<h2>Graph $G_t(\lambda)$</h2>
+Type your own Sage computation below and click “Evaluate”.
+    <div class="compute"><script type="text/x-sage">
+var('t,x')
+pp = 10
+ppp = 150
+pppp = 2400; eps = 0.001
+pppp = 560; eps = 0.1
+
+
+T=4; X=2.5
+range_t_a = (t, 2, T)
+range_x_a = (x, 0, X)
+
+range_t_b = (t, 1, 2)
+range_x_b = (x, 0, X)
+b1 = 2/t 
+b2 = 1
+
+range_t_c = (t, 2/3, 1)
+range_x_c = (x, 0, X)
+c1 = 1/t 
+c2 = 2
+c3 = 2/t
+
+EP1 = 1 - x*t/2
+EP2 = 0
+
+FP1 = 1 + x*t/2 - x*t*log(2/t) - x*t^2/2
+FP2 = 1 - x*t/2 - x*t*log(2/x/t) - x*t^2/2 + t
+FP3 = 0
+
+DP1 = 1 +x*t -x*t^2 +3/2*x*t*log(t) - x*t*log(2)
+DP2 = 1 +5*t -4*x*t -x*t^2 +t*(2+3*x)*log(x) +3/2*x*t*log(t) -x*t*log(2)
+DP3 = -1 +3*t -2*x*t +x*t^2 +x*t*log(x/2) -t*(2+x/2)*log(t) 
+DP4 = -1 -2*t +x*t/2 +x*t^2 -t*(2+x/2)*log(x*t/2)
+DP5 = 0
+
+
+GE1 = plot3d(EP1, range_t_a, range_x_a, color="cyan", plot_points=pp)
+GE1 = GE1.add_condition(lambda t,x,z: 0<=x<=2/t and 2<=t<=T)
+GE2 = plot3d(EP2, range_t_a, range_x_a, color="blue", plot_points=pp)
+GE2 = GE2.add_condition(lambda t,x,z: 2<=t<=T and 2/t<=x<=X)
+
+GF1 = plot3d(FP1, range_t_b, range_x_b, color="red", plot_points=ppp)
+GF1 = GF1.add_condition(lambda t,x,z: 0<=x<=1 and 1<=t<=2)
+GF2 = plot3d(FP2, range_t_b, range_x_b, color="green", plot_points=ppp)
+GF2 = GF2.add_condition(lambda t,x,z: 1<= x<= 2/t and 1<=t<=2)
+GF3 = plot3d(FP3, range_t_b, range_x_b, color="magenta", plot_points=pp)
+GF3 = GF3.add_condition(lambda t,x,z: 2/t<=x and 1<=t<=2)
+
+COL =[(46/51, 35/51, 5/17), \
+      (4/17, 16/17, 6/17), (1, 15/17, 5/51), \
+      (0, 26/51, 40/51), (49/51, 26/51, 16/85), (29/51, 2/17, 12/17),\
+      (14/51, 16/17, 16/17)]
+GD1 = plot3d(DP1, range_t_c, range_x_c, rgbcolor=COL[0], plot_points=ppp)
+GD1 = GD1.add_condition(lambda t,x,z: 0<=x<=1 and 2/3<=t<=1)
+GD2 = plot3d(DP2, range_t_c, range_x_c, rgbcolor=COL[1], plot_points=ppp)
+GD2 = GD2.add_condition(lambda t,x,z: 1<=x<=1/t and 2/3<=t<=1)
+GD3 = plot3d(DP3, range_t_c, range_x_c, rgbcolor=COL[2], plot_points=ppp)
+GD3 = GD3.add_condition(lambda t,x,z: 1/t<=x<=2 and 2/3<=t<=1)
+GD4 = plot3d(DP4, range_t_c, range_x_c, rgbcolor=COL[5], plot_points=ppp)
+GD4 = GD4.add_condition(lambda t,x,z: 2<=x<=2/t and 2/3<=t<=1)
+GD5 = plot3d(DP5, range_t_c, range_x_c, rgbcolor=COL[3], plot_points=ppp)
+GD5 = GD5.add_condition(lambda t,x,z: 2/t<=x and 2/3<=t<=1)
+
+
+show(GE1+GE2 + GF1+GF2+GF3 +GD1+GD2+GD3+GD4+GD5)
+# show(GE1+GE2 + GF1+GF2+GF3 +GD1+GD2+GD3+GD4+GD5, aspect_ratio=(1,0.57,1))      
+    </script></div>
+    <div class="compute"><script type="text/x-sage">
+@interact
+def f(n=(0,10)):
+    print(2^n)
+</script></div>
+
+    
   </body>
 </html>
