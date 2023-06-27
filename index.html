@@ -37,8 +37,8 @@ def f(n=(0,10)):
     print(2^n)
 </script></div>
 
-<h2>Graph $G_t(\lambda)$</h2>
-Type your own Sage computation below and click “Evaluate”.
+<h2>3d graph of $G_t(\lambda)$</h2>
+Click “Evaluate”.
     <div class="compute"><script type="text/x-sage">
 var('t,x')
 pp = 10
@@ -105,13 +105,323 @@ GD5 = GD5.add_condition(lambda t,x,z: 2/t<=x and 2/3<=t<=1)
 
 
 show(GE1+GE2 + GF1+GF2+GF3 +GD1+GD2+GD3+GD4+GD5)
-# show(GE1+GE2 + GF1+GF2+GF3 +GD1+GD2+GD3+GD4+GD5, aspect_ratio=(1,0.57,1))      
+# show(GE1+GE2 + GF1+GF2+GF3 +GD1+GD2+GD3+GD4+GD5, aspect_ratio=(1,0.57,1))       
     </script></div>
+
+<h2>2d graph of $G_t(\lambda)$</h2>
+Click “Evaluate”.
     <div class="compute"><script type="text/x-sage">
+## Bounds Left-Right, and the set of points
+def LRends(h,J):
+    '''
+    The Left End Of the square
+    '''
+    LE = [-J,h]; RE = [J,h]
+    return [LE,RE]
+
+def ALLpointsSquare(J):
+    '''
+    All lattice points in the upper half of the square centered at origin
+    and NE corner at [J,J], that is, [-J,J]X[1,J]
+    Points are listed in order: from right to left and from bottom to top.
+    Points on the x-axis ignored. 
+    '''
+    ALL =[]
+    for h in [0..J]:
+        for k in  range(J,-J-1,-1):
+            ALL.append([k,h])
+    return ALL
+# print(ALLpointsSquare(2))
+
+def SlopesSquare(t,J):
+    '''
+    Calculate all the ANGLES from POW=(-t*J^2,0) to ALLpointsSquare(J).
+    '''
+    POW = [-t*J^2,0]
+    Slopes = []
+    PP = ALLpointsSquare(J)
+    for [x,y] in PP:
+        catetao = -POW[0]+x # cateta orizontală
+#         print(x,y)
+        Slopes.append(numerical_approx(arctan(y/catetao), digits=14))
+#     print(Slopes)
+    SS = sorted(Slopes) # sorts ascending after the 1st component
+    return SS
+  
+J=3
+t=5
+# print("t=%.4f, J=%s"%(t,J))
+# print(66*"-")
+# SlopesSquare(t,J)   # The list of all slopes
+
+def AllGapsSquare(t,J):
+    '''
+    Returns LL the list of all gaps between neighbor ANGLES in SlopesSquare(t,J)
+    '''
+    DD=[]
+    AA=SlopesSquare(t,J)
+    for j in range(len(AA)-1):
+        DD.append(AA[j+1]-AA[j])
+    return DD
+# print("AllGapsSquare(%s,%s)=\n%s"%(t,J,  AllGapsSquare(t,J)))
+
+def AllGapsSorted(t,J):
+    '''
+    LL = AllGaps(t,p)
+    Return sorted(LL)
+    '''
+    DD = AllGapsSquare(t,J)
+    return sorted(DD)
+# print("AllGapsSorted(%s,%s)=\n%s"%(t,J,  AllGapsSorted(t,J)))
+
+#################################################
+
+def GlambdaSquare(t,J):
+    '''
+    G(lambda):
+    POW = [-t*J^2,0]
+    Returns G(lambda;J) := the proportion of slopes that are greater than lambda*Angle_average.
+    
+    NumberOfSlopes = 2*J^2+J (two squares + the ones on the Oy-axis)
+    AverageSlope = The largest angle/the number of slopes
+    SlopeMAX = numerical_approx(arctan(J/(-POW[0]-J)), digits=14)
+    AverageSlope = SlopeMAX/(NumberOfSlopes-1)
+   
+    G is G(lambda) -- as a step function - values as points (lambda,G(lambda)) 
+    for special lambdas, those where are the jumps:
+    return G = [[0,2h], [...,2h-1], [[...], 2h-2],...]
+    '''
+    POW = [-t*J^2,0]
+#     AllSlopes = SlopesSquare(t,J)
+    NumberOfSlopes = 2*J^2+J # = len(AllSlopes)
+    SlopeMAX = numerical_approx(arctan(J/(-POW[0]-J)), digits=14)
+    AverageSlope = SlopeMAX/(NumberOfSlopes-1)
+    
+    SS =  AllGapsSorted(t,J)
+    GG = [g/AverageSlope for g in SS] # angle/AngleAverage
+#     print(GG)
+#     hh = 2*h # p-1
+    Glambda = [[0,1]]
+    HH = NumberOfSlopes
+    for j in [1..(HH-2)]:
+        Glambda.append([GG[j-1],(HH-j)/HH])
+#     print(Glambda)
+    #########
+    ## Add some fake zeros for larger lambda-s to draw the full Glambda
+    xoflastPoint = Glambda[-1][0]
+    ZZ = [[xoflastPoint+z,0] for z in [1..2]]
+    Glambda = Glambda + ZZ
+    return Glambda
+
+
+###################################################
+def DrawGlambdaSquares(G):
+    '''
+    G is a list of lists [l,G(l)] to be drawn
+    line(G, rgbcolor=(1/2,1/4,1))
+    '''
+    pinkk = (1,20/255,147/255)
+    uup =0.04 # draw the graph translated up by upp, just to be distinguishable
+    ## add only uup/2 above an [x,0] to deal with the optical ilusion/expectation
+    GG = []
+    for [x,y] in G:
+        if y>0:
+            GG.append([x,y+uup])
+        else:
+            GG.append([x,y+uup/4])
+    Punctele = line(GG,rgbcolor=pinkk, thickness=2,\
+                       legend_label=r'$G^{*}_{t,J}(\lambda)$',\
+                    #marker ="*",markersize =1.6,
+                   linestyle = ":") # ":"  "-." "--"
+    return(Punctele)
+#     show(Punctele, axes=False,frame=True, xmax=1)    # too flat: aspect_ratio=1
+
+####################################################
+## partial TEST
+# TEST FOR t>2:
+t=2.15
+J=24
+# print("t=%.4f, J=%s"%(t,J))
+print(66*"-")
+# print(Glambda(t,p))
+GE = DrawGlambdaSquares(GlambdaSquare(t,J))  
+
+b = 2/t
+ET1 = 1-x*t/2 # Theoretical graph
+ET2 = 0 # Theoretical graph
+GT1 = plot(ET1,(x,0,b), rgbcolor=(0.6,0,0),zorder=1, plot_points=1800, thickness=1) 
+GT2 = plot(ET2,(x,b,b+0.32), rgbcolor=(0.6,0,0),zorder=1, plot_points=1800, thickness=1)
+#              fill=true, fillcolor=(0.815,.96,.96),alpha=0.61 
+# show(GT1+GT2+GE, axes=False,frame=True, xmax=b+0.32)
+####################################################
+
+####################################################
+## Draw combined for all t> 2/3
+def TogetherSquare(t,J):
+    '''
+    Draw interactive-also Glambda -green for lattice points in the square/
+    centered at origin, NE corner (J,J)
+    POW = (-tJ^2,0)
+    Theoretical vs. Experimental
+    The limit (theoretical) values are (2,3,5 cases depending on the size of t):
+    GT1 and GT2 are the limit values of the limit Glambda for t>2
+    GIT1, GIT2 and GIT3 are the values of the limit Glambda for 1<t<2
+    GIIT1, GIIT2, GIIT3, GIIT4, GIIT5 are the values of the limit Glambda for 2/3<t<1
+    '''
+    GE = DrawGlambdaSquares(GlambdaSquare(t,J))  
+    tkn = 3 # thickness of graphs
+    ########################
+#     Glambda for 2<t
+    b = 2/t
+    t_label = t
+    bmax = b + 0.32 # xmax
+    bmax = 10
+    ET1 = 1-x*t/2 # Theoretical graph
+    ET2 = 0 # Theoretical graph
+    
+    GT1 = plot(ET1,(x,0,b), rgbcolor=(0,0.8,0.8),zorder=1, plot_points=1800, \
+               thickness=tkn,\
+             legend_label = r'$G_t(\lambda)=1-\frac{1}{2}\lambda t\qquad \  \mathrm{if}\ 0\leq \lambda\leq 2/t$')
+
+    GT2 = plot(ET2,(x,b,bmax), rgbcolor=(0,0,1),zorder=1, plot_points=1800, \
+               thickness=tkn,
+#               legend_label='$G_J(t,\\lambda)=1-t\\lambda/2$')
+            legend_label = r'$G_t(\lambda)=0\qquad\qquad\quad\  \mathrm{if}\  2/t\leq \lambda$')
+#      you need an "r" before the string so nothing in it is escaped by Python
+    ########################
+#     Glambda for 1<t<2
+    IT1 = 1+x*t/2-x*t*log(2/t)-x*t^2/2
+    IT2 = 1-x*t/2-x*t*log(2/t/x)-x*t^2/2+t
+    IT3 = 0 
+    
+    eeps = 10^(-10)
+    c=1; d = 2/t+eeps; # to avoid error if t = 2 
+    GIT1 = plot(IT1,(x,0,c), rgbcolor=(0.86,0,0),zorder=1, plot_points=1800, \
+                thickness=tkn,
+        legend_label = \
+    r'$G_t(\lambda)=1+\frac{1}{2}\lambda t+\lambda t\log(t/2)-\frac{1}{2}\lambda t^2\qquad\quad\   \mathrm{if}\ 0\leq \lambda\leq 1$') 
+    GIT2 = plot(IT2,(x,c,d), rgbcolor=(0,0.62,0),zorder=1, plot_points=1800, \
+                thickness=tkn,
+        legend_label = \
+    r'$G_t(\lambda)=1-\frac{1}{2}\lambda t+\lambda t\log(\lambda t/2)-\frac{1}{2}\lambda t^2+t\quad \mathrm{if}\ 1\leq \lambda\leq 2/t$')
+    GIT3 = plot(IT3,(x,d,bmax), rgbcolor=(0.96,0,0.96),zorder=1, plot_points=1800, \
+                thickness=tkn,\
+              legend_label = r'$G_t(\lambda)=0\qquad\qquad\qquad\qquad\qquad\qquad\qquad \qquad  \mathrm{if}\  2/t\leq \lambda$')
+    ########################
+#     Glambda for 2/3<t<1
+    IIT1 = 1 +x*t -x*t^2 +3/2*x*t*log(t) - x*t*log(2)
+    IIT2 = 1 +5*t -4*x*t -x*t^2 +t*(2+3*x)*log(x) +3/2*x*t*log(t) -x*t*log(2)
+    IIT3 = -1 +3*t -2*x*t +x*t^2 +x*t*log(x/2) -t*(2+x/2)*log(t)
+    IIT4 = -1 -2*t +x*t/2 +x*t^2 -t*(2+x/2)*log(x*t/2)
+    IIT5 = 0
+    h1 = 1; h2 = 1/t; h3 = 2; h4 = 2/t
+    COL =[(46/51, 35/51, 5/17), \
+      (4/17, 16/17, 6/17), (1, 15/17, 5/51), \
+      (0, 26/51, 40/51), (49/51, 26/51, 16/85), (29/51, 2/17, 12/17),\
+      (14/51, 16/17, 16/17)]
+    GIIT1 = plot(IIT1,(x,0,h1), rgbcolor=COL[0],zorder=1, plot_points=1800, \
+                thickness=2,
+        legend_label = \
+    r'$G_t(\lambda)=1+\lambda t-\lambda t^2+\frac{3}{2}\lambda t\log(t)-\lambda t\log(2)\qquad\qquad\qquad\qquad\qquad\qquad   \mathrm{if}\ 0\leq \lambda\leq 1$') 
+    GIIT2 = plot(IIT2,(x,h1,h2), rgbcolor=COL[1],zorder=1, plot_points=1800, \
+                thickness=tkn,
+        legend_label = \
+    r'$G_t(\lambda)=1 +5t -4\lambda t -\lambda t^2 +t(2+3\lambda)\log(x) +\frac{3}{2}\lambda t\log(t) -\lambda t\log(2)\ \  \mathrm{if}\ 1\leq \lambda\leq \frac{1}{t}$') 
+    GIIT3 = plot(IIT3,(x,h2,h3), rgbcolor=COL[2],zorder=1, plot_points=1800, \
+                thickness=tkn,
+        legend_label = \
+    r'$G_t(\lambda)=-1 +3t -2\lambda t +\lambda t^2 +\lambda t\log(\lambda/2) -t(2+\lambda/2)\log(t)\ \ \ \qquad \  \mathrm{if}\ \frac{1}{t}\leq \lambda\leq 2$') 
+    GIIT4 = plot(IIT4,(x,h3,h4), rgbcolor=COL[5],zorder=1, plot_points=1800, \
+                thickness=tkn,
+        legend_label = \
+    r'$G(\lambda)=-1 -2t +\frac{1}{2}\lambda t +\lambda t^2 -t(2+\lambda/2)\log(\lambda t/2)\qquad\qquad\qquad\qquad\  \mathrm{if}\ \frac{1}{t}\leq \lambda\leq 2$') 
+    GIIT5 = plot(IIT5,(x,h4,bmax), rgbcolor=COL[3],zorder=1, plot_points=1800, \
+                thickness=tkn,
+        legend_label = \
+    r'$G_t(\lambda)= 0\ \qquad\qquad\qquad\qquad \qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad\qquad \mathrm{if}\ \frac{2}{t} \leq \lambda$') 
+    
+    
+    
+    ########################
+#     Draw e^{-lambda}
+    eMinusLambda = e^(-x)
+    GEML = plot(eMinusLambda,(x,0,10), rgbcolor=(0.86,0,0.06),zorder=1, \
+            legend_label =r'$e^{-\lambda}$',     
+                plot_points=1800, thickness=2)
+    T = text('$t=%.2f$'%t_label, (0.06, 0.06), color='black', fontsize=9,\
+            bounding_box={'boxstyle':'square', 'fc':'w', 'ec':"gray"},\
+            horizontal_alignment = "left")
+    TJ = text('$J=%s$'%J, (0.06, 0.125), color='black', fontsize=9,\
+            bounding_box={'boxstyle':'square', 'fc':'w', 'ec':"gray"},\
+            horizontal_alignment = "left")
+    ##########################
+    
+    GE = DrawGlambdaSquares(GlambdaSquare(t,J)) 
+    if t>= 2:
+#         T = text('$t=%.2f$'%t_label, (b+0.2, 0.755), color='black', fontsize=12,\
+#             bounding_box={'boxstyle':'square', 'fc':'w', 'ec':"gray"})
+#         T = text('$t=%.2f$'%t_label, (0.2, 0.2), color='black', fontsize=12,\
+#             bounding_box={'boxstyle':'square', 'fc':'w', 'ec':"gray"})
+        AALL = GE+GT1+GT2+T+TJ
+        
+    if t> 1 and t <=2 :        
+#         T = text('$t=%.2f$'%t_label, (b+0.2, 0.755), color='black', fontsize=12,\
+#             bounding_box={'boxstyle':'square', 'fc':'w', 'ec':"gray"})
+#         AALL = GIT1+GIT2+GIT3+GT1+GT2+GE+T
+        AALL = GE+GIT1+GIT2+GIT3+T+TJ
+    if t==1:
+        AALL = GE+GIT1+GIT2+GIT3+T+TJ+GEML
+    if 2/3<t and t <1:
+        AALL = GE+GIIT1+GIIT2+GIIT3+GIIT4+GIIT5+T+TJ
+    
+    if t<2/3:
+        AALL = GE+GEML+T+TJ
+
+    show(AALL, axes=False,frame=True, xmax=2.5, #xmax=b+0.32,\
+         axes_labels=[r'$\lambda$',r'$G_t(\lambda);\quad G^{*}_{t,J}(\lambda)$'],\
+        axes_labels_size=1.3, figsize=8) #axes_labels_size=1.6 default
+
+t=1/300; 
+
+# SMALL t
+J=500
+t = 0.0021
+eps = 0.0001
+J=1100
+t = 1/J+eps
+
+# MEDIUM t
+J=15; t=1.99
+J=10; t=1.2
+
+
+# LARGE t
+J=100; t=2
+
+J=100; t= 2.4
+J=20; t=5 # change xmax to 0.5, or so
+
+J=40; t=0.87
+# J=100; t=1.7
+
+print("t=%.4f, 1/J=%.5f, J=%s"%(t,1/J, J))
+TogetherSquare(t,J)
+
+### Interactive
+
+# Run the previious cell, first.
+# Change the initial values if you need. 
+# For smaller $J$ is faster.
+
+# J=120 # try
 @interact
-def f(n=(0,10)):
-    print(2^n)
+def _(t=slider(1/J, 3.0, step_size=0.001, default=1.1), auto_update=false):
+    @interact
+    def _(J=slider(20, 300, step_size=2, default=50), auto_update=false):
+        print("t=%.2f, J=%s"%(t,J))
+        TogetherSquare(t,J)      
 </script></div>
+    
 
     
   </body>
